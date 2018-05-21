@@ -1,0 +1,26 @@
+sudo: false
+
+language: scala
+jdk: oraclejdk8
+scala:
+  - 2.12.6
+  - 2.11.12
+
+script:
+  - sbt ++$TRAVIS_SCALA_VERSION clean coverage test
+
+after_success:
+  - sbt ++$TRAVIS_SCALA_VERSION coverageReport
+  - sbt ++$TRAVIS_SCALA_VERSION coveralls
+  - sbt ++$TRAVIS_SCALA_VERSION codacyCoverage
+
+cache:
+  directories:
+    - $HOME/.sbt/boot
+    - $HOME/.coursier
+    - $HOME/.ivy2/cache
+
+before_cache:
+  - find $HOME/.sbt -name "*.lock" | xargs rm
+  - find $HOME/.coursier -name "*.lock" | xargs rm
+  - find $HOME/.ivy2 -name "ivydata-*.properties" | xargs rm
