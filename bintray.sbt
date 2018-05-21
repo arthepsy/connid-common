@@ -1,0 +1,1 @@
+bintrayReleaseOnPublish in ThisBuild := false
