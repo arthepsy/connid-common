@@ -31,17 +31,17 @@ import org.identityconnectors.framework.common.objects.{
 class PartialModelSpec extends BaseFunSuite {
 
   class PartialModelTest extends PartialModel[String] {
-    override def isValidFor(op: Model.OP): Boolean = ???
-    override def toAttributes(op: Model.OP): Option[Set[Attribute]] = ???
-    override def toNative(op: Model.OP): Option[String] = ???
+    override def isValidFor(op: Model.OP): Boolean = false
+    override def toAttributes(op: Model.OP): Option[Set[Attribute]] = None
+    override def toNative(op: Model.OP): Option[String] = None
   }
 
   object PartialModelTest
       extends PartialModel.Object[String, PartialModelTest] {
-    override def attrNames: Seq[String] = ???
-    override def attrInfos: Seq[AttributeInfo] = ???
-    override def parse(native: String): Option[PartialModelTest] = ???
-    override def parse(set: Set[Attribute]): Option[PartialModelTest] = ???
+    override def attrNames: Seq[String] = Seq.empty
+    override def attrInfos: Seq[AttributeInfo] = Seq.empty
+    override def parse(native: String): Option[PartialModelTest] = None
+    override def parse(set: Set[Attribute]): Option[PartialModelTest] = None
   }
 
   test("java to scala set") {
@@ -51,8 +51,9 @@ class PartialModelSpec extends BaseFunSuite {
     doCallRealMethod().when(tm).parse(any[java.util.Set[Attribute]])
     doReturn(None, None).when(tm).parse(any[Set[Attribute]]())
     tm.parse(new java.util.HashSet[Attribute]())
+    tm.parse(nullValue: java.util.Set[Attribute])
+    verify(tm, times(2)).parse(any[java.util.Set[Attribute]])
     verify(tm, times(1)).parse(any[Set[Attribute]])
-    verify(tm, times(1)).parse(any[java.util.Set[Attribute]])
     verifyNoMoreInteractions(tm)
   }
 }

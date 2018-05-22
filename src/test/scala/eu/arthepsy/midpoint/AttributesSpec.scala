@@ -76,9 +76,9 @@ class AttributesSpec extends BaseFunSuite {
   test("get single value of attribute (null)") {
     val attrs = mock(classOf[util.Set[Attribute]])
     val attr = mock(classOf[Attribute])
-    this.mockAttrs(attrs, attr, null, null)
+    this.mockAttrs(attrs, attr, nullValue, nullValue)
     attrs.getValue("foo", classOf[String]) shouldBe None
-    this.mockAttrs(attrs, attr, "foo", null)
+    this.mockAttrs(attrs, attr, "foo", nullValue)
     attrs.getValue("foo", classOf[String]) shouldBe None
   }
 
@@ -87,8 +87,7 @@ class AttributesSpec extends BaseFunSuite {
     val attr = mock(classOf[Attribute])
     this.mockAttrs(attrs, attr, "foo", List[AnyRef]().asJava)
     attrs.getValue("foo", classOf[String]) shouldBe None
-    val n = null
-    this.mockAttrs(attrs, attr, "foo", List[AnyRef](n).asJava)
+    this.mockAttrs(attrs, attr, "foo", List[AnyRef](nullValue).asJava)
     attrs.getValue("foo", classOf[String]) shouldBe None
   }
 
@@ -127,9 +126,9 @@ class AttributesSpec extends BaseFunSuite {
   test("get multi value of attribute (null)") {
     val attrs = mock(classOf[util.Set[Attribute]])
     val attr = mock(classOf[Attribute])
-    this.mockAttrs(attrs, attr, null, null)
+    this.mockAttrs(attrs, attr, nullValue, nullValue)
     attrs.getValues("foo", classOf[String]) shouldBe Seq.empty
-    this.mockAttrs(attrs, attr, "foo", null)
+    this.mockAttrs(attrs, attr, "foo", nullValue)
     attrs.getValues("foo", classOf[String]) shouldBe Seq.empty
   }
 
@@ -138,8 +137,7 @@ class AttributesSpec extends BaseFunSuite {
     val attr = mock(classOf[Attribute])
     this.mockAttrs(attrs, attr, "foo", List[AnyRef]().asJava)
     attrs.getValues("foo", classOf[String]) shouldBe Seq.empty
-    val n = null
-    this.mockAttrs(attrs, attr, "foo", List[AnyRef](n).asJava)
+    this.mockAttrs(attrs, attr, "foo", List[AnyRef](nullValue).asJava)
     attrs.getValues("foo", classOf[String]) shouldBe Seq.empty
   }
 

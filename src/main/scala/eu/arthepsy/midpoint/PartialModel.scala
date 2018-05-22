@@ -44,11 +44,17 @@ object PartialModel {
   }
 
   trait ObjectBase[N, T <: PartialModel[N]] {
+
     import scala.collection.JavaConverters._
 
     def parse(native: N): Option[T]
+
     def parse(set: Set[Attribute]): Option[T]
+
     def parse(set: java.util.Set[Attribute]): Option[T] =
-      parse(set.asScala.toSet)
+      Option(set) match {
+        case Some(xs) => parse(xs.asScala.toSet)
+        case _        => None
+      }
   }
 }

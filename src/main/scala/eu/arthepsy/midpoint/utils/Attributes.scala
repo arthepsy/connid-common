@@ -40,22 +40,17 @@ object Attributes {
   implicit class ScalaAttributeSetMethods[T](xs: Set[Attribute]) {
     def hasName(name: String): Boolean = xs.exists(_.getName == name)
 
-    def getValue(name: String, classz: Class[T]): Option[T] = {
-      for (attr <- xs) {
-        if (Option(attr).exists(_.getName == name)) {
-          return Attributes.getValue(attr.getValue, name, classz)
-        }
-      }
-      None
-    }
-    def getValues(name: String, classz: Class[T]): Seq[T] = {
-      for (attr <- xs) {
-        if (Option(attr).exists(_.getName == name)) {
-          return Attributes.getValues(attr.getValue, name, classz)
-        }
-      }
-      Seq.empty[T]
-    }
+    def getValue(name: String, classz: Class[T]): Option[T] =
+      xs.collectFirst {
+        case attr if attr.getName == name =>
+          Attributes.getValue(attr.getValue, name, classz)
+      } getOrElse None
+
+    def getValues(name: String, classz: Class[T]): Seq[T] =
+      xs.collectFirst {
+        case attr if attr.getName == name =>
+          Attributes.getValues(attr.getValue, name, classz)
+      } getOrElse Seq.empty[T]
   }
 
   implicit class JavaAttributeSetMethods[T](xs: java.util.Set[Attribute]) {
@@ -71,42 +66,38 @@ object Attributes {
 
   private def getValue[T](values: java.util.List[AnyRef],
                           name: String,
-                          classz: Class[T]): Option[T] = {
-    if (Option(values).isEmpty || values.isEmpty) {
-      return None
+                          classz: Class[T]): Option[T] =
+    Option(values) match {
+      case Some(xs) if xs.size() > 1 =>
+        throw new InvalidAttributeValueException(
+          s"Multiple values for single valued attribute: $name")
+      case Some(xs) if xs.size() == 1 =>
+        Option(xs.get(0)) match {
+          case Some(value) if classz.isAssignableFrom(value.getClass) =>
+            Option(value.asInstanceOf[T])
+          case Some(value) =>
+            throw new InvalidAttributeValueException(
+              s"Invalid value type ${value.getClass.getName} for attribute $name")
+          case _ => None
+        }
+      case _ => None
     }
-    if (values.size > 1) {
-      throw new InvalidAttributeValueException(
-        s"Multiple values for single valued attribute: $name")
-    }
-    val value = values.get(0)
-    if (Option(value).isEmpty) {
-      return None
-    }
-    if (classz.isAssignableFrom(value.getClass)) {
-      return Option(value.asInstanceOf[T])
-    }
-    throw new InvalidAttributeValueException(
-      s"Invalid value type ${value.getClass.getName} for attribute $name")
-  }
 
   private def getValues[T](values: java.util.List[AnyRef],
                            name: String,
-                           classz: Class[T]): Seq[T] = {
-    if (Option(values).isEmpty || values.isEmpty) {
-      return Seq.empty
+                           classz: Class[T]): Seq[T] =
+    Option(values) match {
+      case Some(xs) if xs.size() > 0 =>
+        xs.asScala.map(Option(_)).collect {
+          case Some(value) =>
+            if (classz.isAssignableFrom(value.getClass)) {
+              value.asInstanceOf[T]
+            } else {
+              throw new InvalidAttributeValueException(
+                s"Invalid value type ${value.getClass.getName} for attribute $name")
+            }
+        }
+      case _ => Seq.empty[T]
     }
-    for (i <- 0 until values.size) yield {
-      val value = values.get(i)
-      if (Option(value).isEmpty) {
-        return Seq.empty
-      }
-      if (!classz.isAssignableFrom(value.getClass)) {
-        throw new InvalidAttributeValueException(
-          s"Invalid value type ${value.getClass.getName} for attribute $name")
-      }
-      value.asInstanceOf[T]
-    }
-  }
 
 }

@@ -60,9 +60,11 @@ object Model {
 
     def info: ObjectClassInfo
 
-    def parse(uid: Uid, set: java.util.Set[Attribute]): Option[T] = {
-      parse(uid, set.asScala.toSet)
-    }
+    def parse(uid: Uid, set: java.util.Set[Attribute]): Option[T] =
+      Option(set) match {
+        case Some(xs) => parse(uid, xs.asScala.toSet)
+        case _        => None
+      }
 
     def parse(uid: Uid, set: Set[Attribute]): Option[T] = {
       if (Option(uid).isDefined) {
