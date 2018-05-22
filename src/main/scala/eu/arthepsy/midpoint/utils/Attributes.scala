@@ -23,22 +23,55 @@
 
 package eu.arthepsy.midpoint.utils
 
-import java.util
 import org.identityconnectors.framework.common.exceptions.InvalidAttributeValueException
 import org.identityconnectors.framework.common.objects.Attribute
 import scala.collection.JavaConverters._
 
 object Attributes {
 
-  def contains(xs: util.Set[Attribute], name: String): Boolean =
-    xs.asScala.exists(_.getName == name)
+  implicit class AttributeMethods[T](attr: Attribute) {
+    def getValue(classz: Class[T]): Option[T] = {
+      Attributes.getValue(attr.getValue, attr.getName, classz)
+    }
+    def getValues(classz: Class[T]): Seq[T] =
+      Attributes.getValues(attr.getValue, attr.getName, classz)
+  }
 
-  def getValue[T](attr: Attribute, classz: Class[T]): Option[T] =
-    this.getValue(attr.getValue, attr.getName, classz)
+  implicit class ScalaAttributeSetMethods[T](xs: Set[Attribute]) {
+    def hasName(name: String): Boolean = xs.exists(_.getName == name)
 
-  def getValue[T](values: util.List[AnyRef],
-                  name: String,
-                  classz: Class[T]): Option[T] = {
+    def getValue(name: String, classz: Class[T]): Option[T] = {
+      for (attr <- xs) {
+        if (Option(attr).exists(_.getName == name)) {
+          return Attributes.getValue(attr.getValue, name, classz)
+        }
+      }
+      None
+    }
+    def getValues(name: String, classz: Class[T]): Seq[T] = {
+      for (attr <- xs) {
+        if (Option(attr).exists(_.getName == name)) {
+          return Attributes.getValues(attr.getValue, name, classz)
+        }
+      }
+      Seq.empty[T]
+    }
+  }
+
+  implicit class JavaAttributeSetMethods[T](xs: java.util.Set[Attribute]) {
+    def hasName(name: String): Boolean =
+      ScalaAttributeSetMethods(xs.asScala.toSet).hasName(name)
+
+    def getValue(name: String, classz: Class[T]): Option[T] =
+      ScalaAttributeSetMethods(xs.asScala.toSet).getValue(name, classz)
+
+    def getValues(name: String, classz: Class[T]): Seq[T] =
+      ScalaAttributeSetMethods(xs.asScala.toSet).getValues(name, classz)
+  }
+
+  private def getValue[T](values: java.util.List[AnyRef],
+                          name: String,
+                          classz: Class[T]): Option[T] = {
     if (Option(values).isEmpty || values.isEmpty) {
       return None
     }
@@ -57,23 +90,9 @@ object Attributes {
       s"Invalid value type ${value.getClass.getName} for attribute $name")
   }
 
-  def getValue[T](xs: util.Set[Attribute],
-                  name: String,
-                  classz: Class[T]): Option[T] = {
-    for (attr <- xs.asScala) {
-      if (Option(attr).exists(_.getName == name)) {
-        return this.getValue(attr.getValue, name, classz)
-      }
-    }
-    None
-  }
-
-  def getValues[T](attr: Attribute, classz: Class[T]): Seq[T] =
-    this.getValues(attr.getValue, attr.getName, classz)
-
-  def getValues[T](values: util.List[AnyRef],
-                   name: String,
-                   classz: Class[T]): Seq[T] = {
+  private def getValues[T](values: java.util.List[AnyRef],
+                           name: String,
+                           classz: Class[T]): Seq[T] = {
     if (Option(values).isEmpty || values.isEmpty) {
       return Seq.empty
     }
@@ -90,14 +109,4 @@ object Attributes {
     }
   }
 
-  def getValues[T](xs: util.Set[Attribute],
-                   name: String,
-                   classz: Class[T]): Seq[T] = {
-    for (attr <- xs.asScala) {
-      if (Option(attr).exists(_.getName == name)) {
-        return getValues(attr.getValue, name, classz)
-      }
-    }
-    Seq.empty
-  }
 }

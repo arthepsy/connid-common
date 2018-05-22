@@ -23,41 +23,36 @@
 
 package eu.arthepsy.midpoint
 
-import java.util
+import org.identityconnectors.framework.common.objects.{
+  Attribute,
+  AttributeInfo
+}
 
-import org.identityconnectors.framework.common.objects.Attribute
-import org.scalatest.PrivateMethodTester
-
-class PartialModelSpec extends BaseFunSuite with PrivateMethodTester {
+class PartialModelSpec extends BaseFunSuite {
 
   class PartialModelTest extends PartialModel[String] {
     override def isValidFor(op: Model.OP): Boolean = ???
-    override def toAttributes(op: Model.OP): Option[util.Set[Attribute]] = ???
-    override def toConnectorAttributes(op: Model.OP): Set[Attribute] = ???
+    override def toAttributes(op: Model.OP): Option[Set[Attribute]] = ???
     override def toNative(op: Model.OP): Option[String] = ???
-
-    def testIsBlank(x: String): Boolean = isBlank(x)
-    def testIsBlank(x: Option[String]): Boolean = isBlank(x)
-
   }
 
-  test("isBlank") {
-    val pm = new PartialModelTest
-    pm.testIsBlank("") shouldBe true
-    pm.testIsBlank(" ") shouldBe true
-    pm.testIsBlank("   ") shouldBe true
-    pm.testIsBlank("\t ") shouldBe true
-    pm.testIsBlank(" \t") shouldBe true
-    pm.testIsBlank(" \t ") shouldBe true
-    val v: String = nullValue
-    pm.testIsBlank(v) shouldBe true
-    pm.testIsBlank(None) shouldBe true
-    pm.testIsBlank(Some("")) shouldBe true
-    pm.testIsBlank(Some(" ")) shouldBe true
-    pm.testIsBlank(Some("   ")) shouldBe true
-    pm.testIsBlank(Some("\t ")) shouldBe true
-    pm.testIsBlank(Some(" \t")) shouldBe true
-    pm.testIsBlank(Some(" \t ")) shouldBe true
-    pm.testIsBlank("foo") shouldBe false
+  object PartialModelTest
+      extends PartialModel.Object[String, PartialModelTest] {
+    override def attrNames: Seq[String] = ???
+    override def attrInfos: Seq[AttributeInfo] = ???
+    override def parse(native: String): Option[PartialModelTest] = ???
+    override def parse(set: Set[Attribute]): Option[PartialModelTest] = ???
+  }
+
+  test("java to scala set") {
+    import org.mockito.Mockito._
+    import org.mockito.ArgumentMatchers._
+    val tm = spy(PartialModelTest)
+    doCallRealMethod().when(tm).parse(any[java.util.Set[Attribute]])
+    doReturn(None, None).when(tm).parse(any[Set[Attribute]]())
+    tm.parse(new java.util.HashSet[Attribute]())
+    verify(tm, times(1)).parse(any[Set[Attribute]])
+    verify(tm, times(1)).parse(any[java.util.Set[Attribute]])
+    verifyNoMoreInteractions(tm)
   }
 }

@@ -23,38 +23,25 @@
 
 package eu.arthepsy.midpoint
 
-import org.identityconnectors.common.StringUtil
-import org.identityconnectors.common.security.GuardedString
+import utils._
 
-package object utils {
+class IsBlankSpec extends BaseFunSuite {
 
-  def isBlank(x: String): Boolean =
-    StringUtil.isBlank(x)
-
-  def isBlank(x: Option[String]): Boolean =
-    x.isEmpty || isBlank(x.orNull)
-
-  implicit class MutableSet[T](set: java.util.Set[T]) {
-    def toMutable: java.util.Set[T] =
-      try {
-        set.remove(None.orNull)
-        set
-      } catch {
-        case _: UnsupportedOperationException => new java.util.HashSet(set)
-      }
+  test("isBlank") {
+    isBlank("") shouldBe true
+    isBlank(" ") shouldBe true
+    isBlank("   ") shouldBe true
+    isBlank("\t ") shouldBe true
+    isBlank(" \t") shouldBe true
+    isBlank(" \t ") shouldBe true
+    isBlank(nullValue: String) shouldBe true
+    isBlank(None) shouldBe true
+    isBlank(Some("")) shouldBe true
+    isBlank(Some(" ")) shouldBe true
+    isBlank(Some("   ")) shouldBe true
+    isBlank(Some("\t ")) shouldBe true
+    isBlank(Some(" \t")) shouldBe true
+    isBlank(Some(" \t ")) shouldBe true
+    isBlank("foo") shouldBe false
   }
-
-  implicit class RevealingGuardedString(val gs: GuardedString) {
-    def reveal: Option[String] = {
-      val sb = StringBuilder.newBuilder
-      Option(gs).foreach(_.access(new GuardedString.Accessor {
-        override def access(chars: Array[Char]): Unit = {
-          sb.append(new String(chars))
-          ()
-        }
-      }))
-      if (sb.nonEmpty) Some(sb.mkString) else None
-    }
-  }
-
 }

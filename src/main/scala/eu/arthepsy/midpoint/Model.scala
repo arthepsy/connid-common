@@ -23,11 +23,29 @@
 
 package eu.arthepsy.midpoint
 
-import java.util
 import org.identityconnectors.framework.common.objects._
 
 abstract class Model[N] extends PartialModel[N] {
-  def toConnectorObject(op: Model.OP): Option[ConnectorObject]
+  import Model.{QUERY, UPDATE}
+
+  val objectClass: String
+
+  def toObject(op: Model.OP): Option[ConnectorObject] = {
+    op match {
+      case QUERY | UPDATE if this.isValidFor(op) =>
+      case _                                     => None
+    }
+    val builder =
+      new ConnectorObjectBuilder()
+        .setObjectClass(new ObjectClass(objectClass))
+    this
+      .toAttributes(op)
+      .foreach(_.foreach(a => {
+        builder.addAttribute(a)
+        ()
+      }))
+    Option(builder.build)
+  }
 }
 
 object Model {
@@ -38,28 +56,31 @@ object Model {
   case object DELETE extends OP
 
   trait Object[N, T <: Model[N]] extends PartialModel.Object[N, T] {
-    import utils.MutableSet
+    import scala.collection.JavaConverters._
 
     def info: ObjectClassInfo
 
-    def parse(uid: Uid, set: util.Set[Attribute]): Option[T] = {
-      val modSet = set.toMutable
-      if (Option(uid).isDefined) {
-        if (Option(uid.getValue).isDefined) {
-          modSet.add(new Uid(uid.getUidValue))
-        }
-        if (Option(uid.getNameHint).isDefined && Option(uid.getNameHintValue).isDefined) {
-          modSet.add(new Name(uid.getNameHintValue))
-        }
-      }
-      parse(modSet)
+    def parse(uid: Uid, set: java.util.Set[Attribute]): Option[T] = {
+      parse(uid, set.asScala.toSet)
     }
 
-    def toConnectorObject(native: N, op: OP): Option[ConnectorObject] =
-      parse(native).flatMap(_.toConnectorObject(op))
+    def parse(uid: Uid, set: Set[Attribute]): Option[T] = {
+      if (Option(uid).isDefined) {
+        if (Option(uid.getValue).isDefined) {
+          parse(set + new Uid(uid.getUidValue))
+        }
+        if (Option(uid.getNameHint).isDefined && Option(uid.getNameHintValue).isDefined) {
+          parse(set + new Name(uid.getNameHintValue))
+        }
+      }
+      parse(set)
+    }
+
+    def toObject(native: N, op: OP): Option[ConnectorObject] =
+      parse(native).flatMap(_.toObject(op))
 
     def handle(handler: ResultsHandler, native: N): Boolean = {
-      toConnectorObject(native, QUERY) match {
+      toObject(native, QUERY) match {
         case Some(o) => handler.handle(o)
         case _       => false
       }

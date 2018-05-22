@@ -23,9 +23,6 @@
 
 package eu.arthepsy.midpoint
 
-import java.util
-
-import org.identityconnectors.common.StringUtil
 import org.identityconnectors.framework.common.objects.{
   Attribute,
   AttributeInfo
@@ -35,16 +32,8 @@ abstract class PartialModel[N] {
   import Model.OP
 
   def isValidFor(op: OP): Boolean
-  def toAttributes(op: OP): Option[java.util.Set[Attribute]]
-  def toConnectorAttributes(op: OP): Set[Attribute]
+  def toAttributes(op: OP): Option[Set[Attribute]]
   def toNative(op: OP): Option[N]
-
-  protected def isBlank(x: String): Boolean =
-    StringUtil.isBlank(x)
-
-  protected def isBlank(x: Option[String]): Boolean =
-    x.isEmpty || isBlank(x.orNull)
-
 }
 
 object PartialModel {
@@ -55,7 +44,11 @@ object PartialModel {
   }
 
   trait ObjectBase[N, T <: PartialModel[N]] {
+    import scala.collection.JavaConverters._
+
     def parse(native: N): Option[T]
-    def parse(set: util.Set[Attribute]): Option[T]
+    def parse(set: Set[Attribute]): Option[T]
+    def parse(set: java.util.Set[Attribute]): Option[T] =
+      parse(set.asScala.toSet)
   }
 }
