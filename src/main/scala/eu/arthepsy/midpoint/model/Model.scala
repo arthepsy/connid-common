@@ -21,19 +21,20 @@
  * THE SOFTWARE.
  */
 
-package eu.arthepsy.midpoint
+package eu.arthepsy.midpoint.model
 
 import org.identityconnectors.framework.common.objects._
+import scala.collection.JavaConverters._
 
-abstract class Model[N] extends PartialModel[N] {
-  import Model.{QUERY, UPDATE}
-
+abstract class Model[N, F] extends PartialModel[N, F] {
   val objectClass: String
 
-  def toObject(op: Model.OP): Option[ConnectorObject] = {
+  def objectFailure: F
+
+  def toObject(op: OP): Either[F, ConnectorObject] = {
     op match {
       case QUERY | UPDATE if this.isValidFor(op) =>
-      case _                                     => None
+      case _                                     => Left(objectFailure)
     }
     val builder =
       new ConnectorObjectBuilder()
@@ -44,29 +45,23 @@ abstract class Model[N] extends PartialModel[N] {
         builder.addAttribute(a)
         ()
       }))
-    Option(builder.build)
+    Right(builder.build)
   }
 }
 
 object Model {
-  sealed trait OP
-  case object QUERY extends OP
-  case object CREATE extends OP
-  case object UPDATE extends OP
-  case object DELETE extends OP
 
-  trait Object[N, T <: Model[N]] extends PartialModel.Object[N, T] {
-    import scala.collection.JavaConverters._
+  trait Object[M <: Model[N, F], N, F] extends PartialModel.Object[M, N, F] {
 
     def info: ObjectClassInfo
 
-    def parse(uid: Uid, set: java.util.Set[Attribute]): Option[T] =
+    def parse(uid: Uid, set: java.util.Set[Attribute]): Either[F, M] =
       Option(set) match {
         case Some(xs) => parse(uid, xs.asScala.toSet)
-        case _        => None
+        case _        => Left(parseFailure)
       }
 
-    def parse(uid: Uid, set: Set[Attribute]): Option[T] = {
+    def parse(uid: Uid, set: Set[Attribute]): Either[F, M] = {
       if (Option(uid).isDefined) {
         if (Option(uid.getValue).isDefined) {
           parse(set + new Uid(uid.getUidValue))
@@ -78,13 +73,13 @@ object Model {
       parse(set)
     }
 
-    def toObject(native: N, op: OP): Option[ConnectorObject] =
+    def toObject(native: N, op: OP): Either[F, ConnectorObject] =
       parse(native).flatMap(_.toObject(op))
 
     def handle(handler: ResultsHandler, native: N): Boolean = {
       toObject(native, QUERY) match {
-        case Some(o) => handler.handle(o)
-        case _       => false
+        case Right(o) => handler.handle(o)
+        case _        => false
       }
     }
   }

@@ -21,40 +21,33 @@
  * THE SOFTWARE.
  */
 
-package eu.arthepsy.midpoint.utils
+package eu.arthepsy.midpoint.model.silent
 
-import org.identityconnectors.framework.common.objects.{
-  OperationOptions,
-  ResultsHandler
+import org.identityconnectors.framework.common.objects._
+import scala.collection.JavaConverters._
+import eu.arthepsy.midpoint.model.OP
+
+abstract class PartialModel[N] {
+  def isValidFor(op: OP): Boolean
+  def toAttributes(op: OP): Option[Set[Attribute]]
+  def toNative(op: OP): Option[N]
 }
 
-object PagedQuery {
-  trait Callback[T] {
-    def handle(handler: ResultsHandler,
-               pageOffset: Int,
-               pageSize: Int,
-               filter: T): Boolean
+object PartialModel {
+  trait Object[N, T <: PartialModel[N]] extends ObjectBase[N, T] {
+    def attrNames: Seq[String]
+    def attrInfos: Seq[AttributeInfo]
+    def attrFieldName(name: String): String = name
   }
-  def execute[T](handler: ResultsHandler,
-                 options: OperationOptions,
-                 filter: T,
-                 defaultPageSize: Int,
-                 pagedQueryCallback: Callback[T]): Unit = {
-    var pageOffset: Int = 0
-    var pageSize: Int = defaultPageSize
-    var singlePage: Boolean = false
-    if (Option(options).isDefined) {
-      val optPageOffset: Integer = options.getPagedResultsOffset
-      val optPageSize: Integer = options.getPageSize
-      if (Option(optPageSize).isDefined && Option(optPageOffset).isDefined) {
-        pageOffset = optPageOffset.intValue - 1
-        if (pageOffset < 0) pageOffset = 0
-        pageSize = optPageSize.intValue
-        singlePage = true
+
+  trait ObjectBase[N, T <: PartialModel[N]] {
+    def parse(native: N): Option[T]
+    def parse(set: Set[Attribute]): Option[T]
+
+    def parse(set: java.util.Set[Attribute]): Option[T] =
+      Option(set) match {
+        case Some(xs) => parse(xs.asScala.toSet)
+        case _        => None
       }
-    }
-    while (pagedQueryCallback.handle(handler, pageOffset, pageSize, filter) && !singlePage) {
-      pageOffset = pageOffset + pageSize
-    }
   }
 }

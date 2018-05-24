@@ -21,40 +21,33 @@
  * THE SOFTWARE.
  */
 
-package eu.arthepsy.midpoint
+package eu.arthepsy.midpoint.model
 
-import org.identityconnectors.common.StringUtil
-import org.identityconnectors.common.security.GuardedString
+import org.identityconnectors.framework.common.objects._
+import scala.collection.JavaConverters._
 
-package object utils {
+abstract class PartialModel[N, F] {
+  def isValidFor(op: OP): Boolean
+  def toAttributes(op: OP): Either[F, Set[Attribute]]
+  def toNative(op: OP): Either[F, N]
+}
 
-  def isBlank(x: String): Boolean =
-    StringUtil.isBlank(x)
+object PartialModel {
+  trait Object[M <: PartialModel[N, F], N, F] extends ObjectBase[M, N, F] {
+    def attrNames: Seq[String]
+    def attrInfos: Seq[AttributeInfo]
+    def attrFieldName(name: String): String = name
+  }
 
-  def isBlank(x: Option[String]): Boolean =
-    x.isEmpty || isBlank(x.orNull)
+  trait ObjectBase[M <: PartialModel[N, F], N, F] {
+    def parse(native: N): Either[F, M]
+    def parse(set: Set[Attribute]): Either[F, M]
+    def parseFailure: F
 
-  implicit class MutableSet[T](set: java.util.Set[T]) {
-    def toMutable: java.util.Set[T] =
-      try {
-        set.remove(None.orNull)
-        set
-      } catch {
-        case _: UnsupportedOperationException => new java.util.HashSet(set)
+    def parse(set: java.util.Set[Attribute]): Either[F, M] =
+      Option(set) match {
+        case Some(xs) => parse(xs.asScala.toSet)
+        case _        => Left(parseFailure)
       }
   }
-
-  implicit class RevealingGuardedString(val gs: GuardedString) {
-    def reveal: Option[String] = {
-      val sb = StringBuilder.newBuilder
-      Option(gs).foreach(_.access(new GuardedString.Accessor {
-        override def access(chars: Array[Char]): Unit = {
-          sb.append(new String(chars))
-          ()
-        }
-      }))
-      if (sb.nonEmpty) Some(sb.mkString) else None
-    }
-  }
-
 }

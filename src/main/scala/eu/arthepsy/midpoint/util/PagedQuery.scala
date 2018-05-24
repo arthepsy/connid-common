@@ -21,40 +21,40 @@
  * THE SOFTWARE.
  */
 
-package eu.arthepsy.midpoint
+package eu.arthepsy.midpoint.util
 
 import org.identityconnectors.framework.common.objects.{
-  Attribute,
-  AttributeInfo
+  OperationOptions,
+  ResultsHandler
 }
 
-abstract class PartialModel[N] {
-  import Model.OP
-
-  def isValidFor(op: OP): Boolean
-  def toAttributes(op: OP): Option[Set[Attribute]]
-  def toNative(op: OP): Option[N]
-}
-
-object PartialModel {
-  trait Object[N, T <: PartialModel[N]] extends ObjectBase[N, T] {
-    def attrNames: Seq[String]
-    def attrInfos: Seq[AttributeInfo]
-    def attrFieldName(name: String): String = name
+object PagedQuery {
+  trait Callback[T] {
+    def handle(handler: ResultsHandler,
+               pageOffset: Int,
+               pageSize: Int,
+               filter: T): Boolean
   }
-
-  trait ObjectBase[N, T <: PartialModel[N]] {
-
-    import scala.collection.JavaConverters._
-
-    def parse(native: N): Option[T]
-
-    def parse(set: Set[Attribute]): Option[T]
-
-    def parse(set: java.util.Set[Attribute]): Option[T] =
-      Option(set) match {
-        case Some(xs) => parse(xs.asScala.toSet)
-        case _        => None
+  def execute[T](handler: ResultsHandler,
+                 options: OperationOptions,
+                 filter: T,
+                 defaultPageSize: Int,
+                 pagedQueryCallback: Callback[T]): Unit = {
+    var pageOffset: Int = 0
+    var pageSize: Int = defaultPageSize
+    var singlePage: Boolean = false
+    if (Option(options).isDefined) {
+      val optPageOffset: Integer = options.getPagedResultsOffset
+      val optPageSize: Integer = options.getPageSize
+      if (Option(optPageSize).isDefined && Option(optPageOffset).isDefined) {
+        pageOffset = optPageOffset.intValue - 1
+        if (pageOffset < 0) pageOffset = 0
+        pageSize = optPageSize.intValue
+        singlePage = true
       }
+    }
+    while (pagedQueryCallback.handle(handler, pageOffset, pageSize, filter) && !singlePage) {
+      pageOffset = pageOffset + pageSize
+    }
   }
 }

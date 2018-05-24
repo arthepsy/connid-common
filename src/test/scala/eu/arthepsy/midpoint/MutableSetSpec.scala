@@ -23,28 +23,27 @@
 
 package eu.arthepsy.midpoint
 
-import scala.collection.JavaConverters._
-import utils._
+import util._
 
 class MutableSetSpec extends BaseFunSuite {
 
-  test("MutableSet") {
-    var mutableSet: java.util.Set[String] =
-      new java.util.HashSet[String](Seq("foo", "bar").asJava)
-    mutableSet = mutableSet.toMutable
+  test("mutable to mutable") {
+    val mutableSet =
+      new java.util.HashSet[String](java.util.Arrays.asList("foo", "bar")).toMutable
     mutableSet.add("foobar")
     mutableSet.size shouldBe 3
+  }
 
-    mutableSet = new java.util.HashSet[String](Seq("foo", "bar").asJava)
-    var immutableSet: java.util.Set[String] =
-      java.util.Collections.unmodifiableSet(mutableSet)
+  test("immutable to mutable") {
+    val immutableSet = java.util.Collections.unmodifiableSet(
+      new java.util.HashSet[String](java.util.Arrays.asList("foo", "bar")))
     assertThrows[Exception] {
       immutableSet.add("foobar")
     }
     immutableSet.size shouldBe 2
-    immutableSet = immutableSet.toMutable
-    immutableSet.add("foobar")
-    immutableSet.size shouldBe 3
+    val mutableSet = immutableSet.toMutable
+    mutableSet.add("foobar")
+    mutableSet.size shouldBe 3
   }
 
 }

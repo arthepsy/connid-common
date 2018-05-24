@@ -23,19 +23,40 @@
 
 package eu.arthepsy.midpoint
 
+import org.identityconnectors.common.StringUtil
 import org.identityconnectors.common.security.GuardedString
-import util._
 
-class GuardedStringSpec extends BaseFunSuite {
+import scala.util.{Success, Try}
 
-  test("normal GuardedString") {
-    val gs = new GuardedString("password".toCharArray)
-    gs.reveal shouldBe Some("password")
+package object util {
+
+  def isBlank(x: String): Boolean =
+    StringUtil.isBlank(x)
+
+  def isBlank(x: Option[String]): Boolean =
+    x.isEmpty || isBlank(x.orNull)
+
+  implicit class MutableSet[T](set: java.util.Set[T]) {
+    def toMutable: java.util.Set[T] =
+      Try {
+        set.remove(None.orNull)
+      } match {
+        case Success(_) => set
+        case _          => new java.util.HashSet(set)
+      }
   }
 
-  test("empty GuardedString") {
-    val gs = new GuardedString("".toCharArray)
-    gs.reveal shouldBe None
+  implicit class RevealingGuardedString(val gs: GuardedString) {
+    def reveal: Option[String] = {
+      val sb = StringBuilder.newBuilder
+      Option(gs).foreach(_.access(new GuardedString.Accessor {
+        override def access(chars: Array[Char]): Unit = {
+          sb.append(new String(chars))
+          ()
+        }
+      }))
+      if (sb.nonEmpty) Some(sb.mkString) else None
+    }
   }
 
 }

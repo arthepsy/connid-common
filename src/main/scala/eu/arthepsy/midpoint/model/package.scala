@@ -23,19 +23,10 @@
 
 package eu.arthepsy.midpoint
 
-import org.identityconnectors.common.security.GuardedString
-import util._
-
-class GuardedStringSpec extends BaseFunSuite {
-
-  test("normal GuardedString") {
-    val gs = new GuardedString("password".toCharArray)
-    gs.reveal shouldBe Some("password")
-  }
-
-  test("empty GuardedString") {
-    val gs = new GuardedString("".toCharArray)
-    gs.reveal shouldBe None
-  }
-
+package object model {
+  sealed trait OP
+  case object QUERY extends OP
+  case object CREATE extends OP
+  case object UPDATE extends OP
+  case object DELETE extends OP
 }

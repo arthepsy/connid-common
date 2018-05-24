@@ -23,7 +23,7 @@
 
 package eu.arthepsy.midpoint
 
-import utils._
+import util._
 
 class IsBlankSpec extends BaseFunSuite {
 

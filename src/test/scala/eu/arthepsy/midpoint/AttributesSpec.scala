@@ -23,24 +23,19 @@
 
 package eu.arthepsy.midpoint
 
-import java.util
-
 import org.identityconnectors.framework.common.exceptions.InvalidAttributeValueException
-import org.identityconnectors.framework.common.objects.{
-  Attribute,
-  AttributeBuilder
-}
+import org.identityconnectors.framework.common.objects._
 import org.mockito.Mockito.{mock, when}
 
 import scala.collection.JavaConverters._
-import utils.Attributes._
+import util.Attributes._
 
 class AttributesSpec extends BaseFunSuite {
 
-  private[this] def mockAttrs(attrs: util.Set[Attribute],
+  private[this] def mockAttrs(attrs: java.util.Set[Attribute],
                               attr: Attribute,
                               name: String,
-                              value: util.List[AnyRef]): Unit = {
+                              value: java.util.List[AnyRef]): Unit = {
     when(attr.getName).thenReturn(name)
     when(attr.getValue).thenReturn(value)
     when(attrs.iterator).thenReturn(Seq(attr).toIterator.asJava)
@@ -48,7 +43,7 @@ class AttributesSpec extends BaseFunSuite {
   }
 
   test("check attribute existence") {
-    val attrs = new util.HashSet[Attribute]()
+    val attrs = new java.util.HashSet[Attribute]()
     attrs.add(AttributeBuilder.build("bar1"))
     attrs.add(AttributeBuilder.build("bar2"))
     attrs.add(AttributeBuilder.build("bar3"))
@@ -67,14 +62,14 @@ class AttributesSpec extends BaseFunSuite {
   }
 
   test("get single value of attribute (correct)") {
-    val attrs = mock(classOf[util.Set[Attribute]])
+    val attrs = mock(classOf[java.util.Set[Attribute]])
     val attr = mock(classOf[Attribute])
     this.mockAttrs(attrs, attr, "foo", List[AnyRef]("bar").asJava)
     attrs.getValue("foo", classOf[String]) shouldBe Some("bar")
   }
 
   test("get single value of attribute (null)") {
-    val attrs = mock(classOf[util.Set[Attribute]])
+    val attrs = mock(classOf[java.util.Set[Attribute]])
     val attr = mock(classOf[Attribute])
     this.mockAttrs(attrs, attr, nullValue, nullValue)
     attrs.getValue("foo", classOf[String]) shouldBe None
@@ -83,7 +78,7 @@ class AttributesSpec extends BaseFunSuite {
   }
 
   test("get single value of attribute (empty)") {
-    val attrs = mock(classOf[util.Set[Attribute]])
+    val attrs = mock(classOf[java.util.Set[Attribute]])
     val attr = mock(classOf[Attribute])
     this.mockAttrs(attrs, attr, "foo", List[AnyRef]().asJava)
     attrs.getValue("foo", classOf[String]) shouldBe None
@@ -92,7 +87,7 @@ class AttributesSpec extends BaseFunSuite {
   }
 
   test("get single value of attribute (invalid type)") {
-    val attrs = mock(classOf[util.Set[Attribute]])
+    val attrs = mock(classOf[java.util.Set[Attribute]])
     val attr = mock(classOf[Attribute])
     this.mockAttrs(attrs, attr, "foo", List[AnyRef](new Integer(123)).asJava)
     assertThrows[InvalidAttributeValueException] {
@@ -108,7 +103,7 @@ class AttributesSpec extends BaseFunSuite {
   }
 
   test("get single value of attribute (multiple)") {
-    val attrs = mock(classOf[util.Set[Attribute]])
+    val attrs = mock(classOf[java.util.Set[Attribute]])
     val attr = mock(classOf[Attribute])
     this.mockAttrs(attrs, attr, "foo", List[AnyRef]("bar1", "bar2").asJava)
     assertThrows[InvalidAttributeValueException] {
@@ -117,14 +112,14 @@ class AttributesSpec extends BaseFunSuite {
   }
 
   test("get multi value of attribute (correct)") {
-    val attrs = mock(classOf[util.Set[Attribute]])
+    val attrs = mock(classOf[java.util.Set[Attribute]])
     val attr = mock(classOf[Attribute])
     this.mockAttrs(attrs, attr, "foo", List[AnyRef]("foo", "bar").asJava)
     attrs.getValues("foo", classOf[String]) shouldBe Seq("foo", "bar")
   }
 
   test("get multi value of attribute (null)") {
-    val attrs = mock(classOf[util.Set[Attribute]])
+    val attrs = mock(classOf[java.util.Set[Attribute]])
     val attr = mock(classOf[Attribute])
     this.mockAttrs(attrs, attr, nullValue, nullValue)
     attrs.getValues("foo", classOf[String]) shouldBe Seq.empty
@@ -133,7 +128,7 @@ class AttributesSpec extends BaseFunSuite {
   }
 
   test("get multi value of attribute (empty)") {
-    val attrs = mock(classOf[util.Set[Attribute]])
+    val attrs = mock(classOf[java.util.Set[Attribute]])
     val attr = mock(classOf[Attribute])
     this.mockAttrs(attrs, attr, "foo", List[AnyRef]().asJava)
     attrs.getValues("foo", classOf[String]) shouldBe Seq.empty
@@ -142,7 +137,7 @@ class AttributesSpec extends BaseFunSuite {
   }
 
   test("get multi value of attribute (invalid type)") {
-    val attrs = mock(classOf[util.Set[Attribute]])
+    val attrs = mock(classOf[java.util.Set[Attribute]])
     val attr = mock(classOf[Attribute])
     this.mockAttrs(attrs,
                    attr,
@@ -154,7 +149,7 @@ class AttributesSpec extends BaseFunSuite {
   }
 
   test("get multi value of attribute (single)") {
-    val attrs = mock(classOf[util.Set[Attribute]])
+    val attrs = mock(classOf[java.util.Set[Attribute]])
     val attr = mock(classOf[Attribute])
     this.mockAttrs(attrs, attr, "foo", List[AnyRef]("bar1").asJava)
     attrs.getValues("foo", classOf[String]) shouldBe Seq("bar1")

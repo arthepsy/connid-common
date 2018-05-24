@@ -21,7 +21,7 @@
  * THE SOFTWARE.
  */
 
-package eu.arthepsy.midpoint.utils
+package eu.arthepsy.midpoint.util
 
 import org.identityconnectors.framework.common.exceptions.InvalidAttributeValueException
 import org.identityconnectors.framework.common.objects.Attribute
