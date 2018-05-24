@@ -24,6 +24,7 @@
 package eu.arthepsy.midpoint.model.silent
 
 import org.identityconnectors.framework.common.objects._
+import scala.collection.JavaConverters._
 import eu.arthepsy.midpoint.model.{OP, QUERY, UPDATE}
 
 abstract class Model[N] extends PartialModel[N] {
@@ -49,7 +50,6 @@ abstract class Model[N] extends PartialModel[N] {
 
 object Model {
   trait Object[N, T <: Model[N]] extends PartialModel.Object[N, T] {
-    import scala.collection.JavaConverters._
 
     def info: ObjectClassInfo
 
