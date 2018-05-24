@@ -31,21 +31,19 @@ abstract class Model[N, F] extends PartialModel[N, F] {
 
   def objectFailure: F
 
-  def toObject(op: OP): Either[F, ConnectorObject] = {
-    op match {
-      case QUERY | UPDATE if this.isValidFor(op) =>
-      case _                                     => Left(objectFailure)
-    }
-    val builder =
-      new ConnectorObjectBuilder()
-        .setObjectClass(new ObjectClass(objectClass))
-    this
-      .toAttributes(op)
-      .foreach(_.foreach(a => {
-        builder.addAttribute(a)
-        ()
-      }))
-    Right(builder.build)
+  def toObject(op: OP): Either[F, ConnectorObject] = op match {
+    case QUERY | UPDATE if this.isValidFor(op) =>
+      this.toAttributes(op) match {
+        case Right(attributes) =>
+          val builder =
+            new ConnectorObjectBuilder()
+              .setObjectClass(new ObjectClass(objectClass))
+          attributes.foreach(a => builder.addAttribute(a))
+          Right(builder.build)
+        case Left(err) => Left(err)
+      }
+    case _ =>
+      Left(objectFailure)
   }
 }
 
@@ -74,7 +72,10 @@ object Model {
     }
 
     def toObject(native: N, op: OP): Either[F, ConnectorObject] =
-      parse(native).flatMap(_.toObject(op))
+      parse(native) match {
+        case Right(n) => n.toObject(op)
+        case Left(n)  => n.asInstanceOf
+      }
 
     def handle(handler: ResultsHandler, native: N): Boolean = {
       toObject(native, QUERY) match {

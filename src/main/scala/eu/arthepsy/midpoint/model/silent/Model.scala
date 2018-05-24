@@ -30,21 +30,17 @@ import eu.arthepsy.midpoint.model.{OP, QUERY, UPDATE}
 abstract class Model[N] extends PartialModel[N] {
   val objectClass: String
 
-  def toObject(op: OP): Option[ConnectorObject] = {
-    op match {
-      case QUERY | UPDATE if this.isValidFor(op) =>
-      case _                                     => None
-    }
-    val builder =
-      new ConnectorObjectBuilder()
-        .setObjectClass(new ObjectClass(objectClass))
-    this
-      .toAttributes(op)
-      .foreach(_.foreach(a => {
-        builder.addAttribute(a)
-        ()
-      }))
-    Option(builder.build)
+  def toObject(op: OP): Option[ConnectorObject] = op match {
+    case QUERY | UPDATE if this.isValidFor(op) =>
+      this.toAttributes(op) match {
+        case Some(attributes) =>
+          val builder =
+            new ConnectorObjectBuilder()
+              .setObjectClass(new ObjectClass(objectClass))
+          attributes.foreach(a => builder.addAttribute(a))
+          Option(builder.build)
+        case _ => None
+      }
   }
 }
 
