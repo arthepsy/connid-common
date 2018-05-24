@@ -40,21 +40,30 @@ object PagedQuery {
                  filter: T,
                  defaultPageSize: Int,
                  pagedQueryCallback: Callback[T]): Unit = {
-    var pageOffset: Int = 0
-    var pageSize: Int = defaultPageSize
-    var singlePage: Boolean = false
-    if (Option(options).isDefined) {
-      val optPageOffset: Integer = options.getPagedResultsOffset
-      val optPageSize: Integer = options.getPageSize
-      if (Option(optPageSize).isDefined && Option(optPageOffset).isDefined) {
-        pageOffset = optPageOffset.intValue - 1
-        if (pageOffset < 0) pageOffset = 0
-        pageSize = optPageSize.intValue
-        singlePage = true
+    val pageSize =
+      Option(options)
+        .flatMap(o => Option(o.getPageSize))
+        .map(Predef.Integer2int)
+        .filter(p => p > 0)
+        .getOrElse(defaultPageSize)
+    val pageOffset =
+      Option(options)
+        .flatMap(o => Option(o.getPagedResultsOffset))
+        .map(Predef.Integer2int)
+        .filter(p => p >= 1)
+        .getOrElse(1) - 1
+    val singlePage = Option(options).exists(o =>
+      Option(o.getPagedResultsOffset).isDefined && Option(o.getPageSize).isDefined)
+
+    @scala.annotation.tailrec
+    def handle(handler: ResultsHandler,
+               pageOffset: Int,
+               pageSize: Int,
+               filter: T): Unit = {
+      if (pagedQueryCallback.handle(handler, pageOffset, pageSize, filter) && !singlePage) {
+        handle(handler, pageOffset + pageSize, pageSize, filter)
       }
     }
-    while (pagedQueryCallback.handle(handler, pageOffset, pageSize, filter) && !singlePage) {
-      pageOffset = pageOffset + pageSize
-    }
+    handle(handler, pageOffset, pageSize, filter)
   }
 }
