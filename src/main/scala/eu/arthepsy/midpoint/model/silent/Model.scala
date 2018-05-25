@@ -46,14 +46,14 @@ abstract class Model[N] extends PartialModel[N] {
 }
 
 object Model {
-  trait Object[N, T <: Model[N]] extends PartialModel.Object[N, T] {
+  trait Object[M <: Model[N], N] extends PartialModel.Object[M, N] {
 
     def info: ObjectClassInfo
 
-    def parse(uid: Uid, set: java.util.Set[Attribute]): Option[T] =
+    def parse(uid: Uid, set: java.util.Set[Attribute]): Option[M] =
       internal.Model.parse(uid, set, parse, None)
 
-    def parse(uid: Uid, set: Set[Attribute]): Option[T] =
+    def parse(uid: Uid, set: Set[Attribute]): Option[M] =
       internal.Model.parse(uid, set, parse)
 
     def toObject(native: N, op: OP): Option[ConnectorObject] =

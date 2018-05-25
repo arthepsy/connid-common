@@ -33,17 +33,17 @@ abstract class PartialModel[N] {
 }
 
 object PartialModel {
-  trait Object[N, T <: PartialModel[N]] extends ObjectBase[N, T] {
+  trait Object[M <: PartialModel[N], N] extends ObjectBase[M, N] {
     def attrNames: Seq[String]
     def attrInfos: Seq[AttributeInfo]
     def attrFieldName(name: String): String = name
   }
 
-  trait ObjectBase[N, T <: PartialModel[N]] {
-    def parse(native: N): Option[T]
-    def parse(set: Set[Attribute]): Option[T]
+  trait ObjectBase[M <: PartialModel[N], N] {
+    def parse(native: N): Option[M]
+    def parse(set: Set[Attribute]): Option[M]
 
-    def parse(set: java.util.Set[Attribute]): Option[T] =
+    def parse(set: java.util.Set[Attribute]): Option[M] =
       internal.PartialModel.parse(set, parse, None)
   }
 }

@@ -62,7 +62,7 @@ class SilentModelSpec extends BaseFunSuite {
   }
 
   object DemoSilentModel
-      extends silent.Model.Object[(Int, String), DemoSilentModel] {
+      extends silent.Model.Object[DemoSilentModel, (Int, String)] {
     override def info: ObjectClassInfo =
       new ObjectClassInfoBuilder()
         .setType("demo")

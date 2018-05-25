@@ -61,7 +61,7 @@ class SilentPartialModelSpec extends BaseFunSuite {
   }
 
   object SilentPartialDemoModel
-      extends silent.PartialModel.Object[(Int, String), SilentPartialDemoModel] {
+      extends silent.PartialModel.Object[SilentPartialDemoModel, (Int, String)] {
     override def attrNames: Seq[String] = Seq("id")
 
     override def attrInfos: Seq[AttributeInfo] = Seq(
