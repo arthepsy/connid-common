@@ -24,8 +24,7 @@
 package eu.arthepsy.midpoint.model.silent
 
 import org.identityconnectors.framework.common.objects._
-import scala.collection.JavaConverters._
-import eu.arthepsy.midpoint.model.OP
+import eu.arthepsy.midpoint.model.{OP, internal}
 
 abstract class PartialModel[N] {
   def isValidFor(op: OP): Boolean
@@ -45,9 +44,6 @@ object PartialModel {
     def parse(set: Set[Attribute]): Option[T]
 
     def parse(set: java.util.Set[Attribute]): Option[T] =
-      Option(set) match {
-        case Some(xs) => parse(xs.asScala.toSet)
-        case _        => None
-      }
+      internal.PartialModel.parse(set, parse, None)
   }
 }

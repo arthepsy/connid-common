@@ -24,8 +24,8 @@
 package eu.arthepsy.midpoint.model.silent
 
 import org.identityconnectors.framework.common.objects._
-import scala.collection.JavaConverters._
-import eu.arthepsy.midpoint.model.{OP, QUERY, UPDATE}
+
+import eu.arthepsy.midpoint.model.{OP, QUERY, UPDATE, internal}
 
 abstract class Model[N] extends PartialModel[N] {
   val objectClass: String
@@ -41,6 +41,7 @@ abstract class Model[N] extends PartialModel[N] {
           Option(builder.build)
         case _ => None
       }
+    case _ => None
   }
 }
 
@@ -50,22 +51,10 @@ object Model {
     def info: ObjectClassInfo
 
     def parse(uid: Uid, set: java.util.Set[Attribute]): Option[T] =
-      Option(set) match {
-        case Some(xs) => parse(uid, xs.asScala.toSet)
-        case _        => None
-      }
+      internal.Model.parse(uid, set, parse, None)
 
-    def parse(uid: Uid, set: Set[Attribute]): Option[T] = {
-      if (Option(uid).isDefined) {
-        if (Option(uid.getValue).isDefined) {
-          parse(set + new Uid(uid.getUidValue))
-        }
-        if (Option(uid.getNameHint).isDefined && Option(uid.getNameHintValue).isDefined) {
-          parse(set + new Name(uid.getNameHintValue))
-        }
-      }
-      parse(set)
-    }
+    def parse(uid: Uid, set: Set[Attribute]): Option[T] =
+      internal.Model.parse(uid, set, parse)
 
     def toObject(native: N, op: OP): Option[ConnectorObject] =
       parse(native).flatMap(_.toObject(op))

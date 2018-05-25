@@ -21,29 +21,19 @@
  * THE SOFTWARE.
  */
 
-package eu.arthepsy.midpoint.model
+package eu.arthepsy.midpoint.model.internal
 
-import org.identityconnectors.framework.common.objects._
+import org.identityconnectors.framework.common.objects.Attribute
+import scala.collection.JavaConverters._
 
-abstract class PartialModel[N, F] {
-  def isValidFor(op: OP): Boolean
-  def toAttributes(op: OP): Either[F, Set[Attribute]]
-  def toNative(op: OP): Either[F, N]
-}
+private[model] object PartialModel {
 
-object PartialModel {
-  trait Object[M <: PartialModel[N, F], N, F] extends ObjectBase[M, N, F] {
-    def attrNames: Seq[String]
-    def attrInfos: Seq[AttributeInfo]
-    def attrFieldName(name: String): String = name
-  }
+  def parse[R](set: java.util.Set[Attribute],
+               parse: Set[Attribute] => R,
+               fail: R): R =
+    Option(set) match {
+      case Some(xs) => parse(xs.asScala.toSet)
+      case _        => fail
+    }
 
-  trait ObjectBase[M <: PartialModel[N, F], N, F] {
-    def parse(native: N): Either[F, M]
-    def parse(set: Set[Attribute]): Either[F, M]
-    def parseFailure: F
-
-    def parse(set: java.util.Set[Attribute]): Either[F, M] =
-      internal.PartialModel.parse(set, parse, Left(parseFailure))
-  }
 }

@@ -24,7 +24,6 @@
 package eu.arthepsy.midpoint.model
 
 import org.identityconnectors.framework.common.objects._
-import scala.collection.JavaConverters._
 
 abstract class Model[N, F] extends PartialModel[N, F] {
   val objectClass: String
@@ -54,28 +53,18 @@ object Model {
     def info: ObjectClassInfo
 
     def parse(uid: Uid, set: java.util.Set[Attribute]): Either[F, M] =
-      Option(set) match {
-        case Some(xs) => parse(uid, xs.asScala.toSet)
-        case _        => Left(parseFailure)
-      }
+      internal.Model.parse(uid, set, parse, Left(parseFailure))
 
-    def parse(uid: Uid, set: Set[Attribute]): Either[F, M] = {
-      if (Option(uid).isDefined) {
-        if (Option(uid.getValue).isDefined) {
-          parse(set + new Uid(uid.getUidValue))
-        }
-        if (Option(uid.getNameHint).isDefined && Option(uid.getNameHintValue).isDefined) {
-          parse(set + new Name(uid.getNameHintValue))
-        }
-      }
-      parse(set)
-    }
+    def parse(uid: Uid, set: Set[Attribute]): Either[F, M] =
+      internal.Model.parse(uid, set, parse)
 
-    def toObject(native: N, op: OP): Either[F, ConnectorObject] =
-      parse(native) match {
+    def toObject(native: N, op: OP): Either[F, ConnectorObject] = {
+      val parsed = parse(native)
+      parsed match {
         case Right(n) => n.toObject(op)
-        case Left(n)  => n.asInstanceOf
+        case _        => parsed.asInstanceOf[Either[F, ConnectorObject]]
       }
+    }
 
     def handle(handler: ResultsHandler, native: N): Boolean = {
       toObject(native, QUERY) match {
